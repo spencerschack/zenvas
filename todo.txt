@@ -1,3 +1,4 @@
-pull out magic numbers into options
-optimistic redraw
-lightness adjust based on angle
+round (2-10) cell tint and batch draw calls (or shader)
+generate random field instead of grid
+colorz
+interpolate between mouse events

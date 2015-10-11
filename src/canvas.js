@@ -3,9 +3,14 @@ import PointSampler from 'point_sampler';
 import { 
   lineSpacing,
   lineLength,
-  lineColor,
+  lineHue,
+  lineSaturation,
+  lineLightness,
+  lineAlpha,
   brushSize,
-  brushProfile
+  brushProfile,
+  brushLength,
+  brushEffect
 } from 'options';
 import {distance} from 'utils';
 
@@ -24,41 +29,42 @@ export default class Canvas {
     this.ratio = window.devicePixelRatio || 1;
     window.addEventListener('resize', () => this.fitElement());
     this.fitElement();
-    const sampler = new PointSampler(20);
-    window.addEventListener('mousemove', ({pageX: x, pageY: y}) => {
-      sampler.push(x, y);
-      const angle = sampler.angle();
-      this.brush(x, y, angle);
+    const sampler = new PointSampler(brushLength);
+    window.addEventListener('mousemove', ({pageX: x, pageY: y, shiftKey}) => {
+      if(!shiftKey) {
+        sampler.push(x, y);
+        const angle = sampler.angle();
+        this.brush(x, y, angle);
+      }
     });
   }
 
   fitElement() {
     const { innerWidth: width, innerHeight: height } = window;
     this.grid = new Grid(width, height);
-    this.width = width;
-    this.height = height;
     this.element.width  =  width * this.ratio;
     this.element.height = height * this.ratio;
     this.context.scale(this.ratio, this.ratio);
-    this.context.strokeStyle = lineColor;
+    this.context.strokeStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;;
+    this.context.fillStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;
     this.grid.forEach(cell => cell.draw(this.context));
   }
 
   brush(x, y, angle) {
-    const radius = brushSize + lineLength;
-    const rows = ceil(2 * radius / lineSpacing);
-    const columns = ceil(2 * radius / lineSpacing);
-    const row = floor((y - radius) / lineSpacing);
-    const column = floor((x - radius) / lineSpacing);
-    this.redraw(column * lineSpacing, row * lineSpacing, columns * lineSpacing, rows * lineSpacing, () => {
-      this.grid.view(row - 10, column - 10, rows + 20, columns + 20).forEach(cell => {
+    const inner = brushSize + lineLength;
+    const outer = inner + lineLength;
+    const row = floor((y - outer) / lineSpacing);
+    const column = floor((x - outer) / lineSpacing);
+    const intervals = ceil(2 * outer / lineSpacing);
+    this.redraw(x - inner, y - inner, 2 * inner, 2 * inner, () => {
+      this.grid.view(row, column, intervals, intervals).forEach(cell => {
         const dist = distance(cell.x0 - x, cell.y0 - y);
         if(dist < brushSize) {
           const effect = brushProfile(dist / brushSize);
-          const x = cos(angle) * lineLength;
-          const y = sin(angle) * lineLength;
-          cell.x1 += (x - cell.x1) * effect / 15;
-          cell.y1 += (y - cell.y1) * effect / 15;
+          const dx = cos(angle) * lineLength - cell.x1;
+          const dy = sin(angle) * lineLength - cell.y1;
+          cell.x1 += dx * effect * brushEffect;
+          cell.y1 += dy * effect * brushEffect;
         }
         cell.draw(this.context);
       });

@@ -5,6 +5,8 @@ define('point_sampler', ['exports', 'module', 'utils'], function (exports, modul
 
   function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+  var atan2 = Math.atan2;
+
   var PointSampler = (function () {
     function PointSampler(n) {
       _classCallCheck(this, PointSampler);
@@ -12,26 +14,29 @@ define('point_sampler', ['exports', 'module', 'utils'], function (exports, modul
       this.weights = Array(n).fill(0).map(function (_, i) {
         return -Math.pow(i / n, 2) + 1;
       });
-      this.xSamples = Array(n).fill(0);
-      this.ySamples = Array(n).fill(0);
+      this.vectors = Array(n).fill([0, 0]);
     }
 
     _createClass(PointSampler, [{
       key: 'push',
       value: function push(x, y) {
-        this.xSamples.pop();
-        this.xSamples.unshift(x);
-        this.ySamples.pop();
-        this.ySamples.unshift(y);
+        if (this.lastX && this.lastY) {
+          this.vectors.pop();
+          this.vectors.unshift([x - this.lastX, y - this.lastY]);
+        }
+        this.lastX = x;
+        this.lastY = y;
       }
     }, {
       key: 'angle',
       value: function angle() {
-        return Math.atan2((0, _utils.weightedAverage)((0, _utils.pairs)(this.ySamples).map(function (s) {
-          return s[0] - s[1];
-        }), this.weights), (0, _utils.weightedAverage)((0, _utils.pairs)(this.xSamples).map(function (s) {
-          return s[0] - s[1];
-        }), this.weights));
+        var _context;
+
+        return atan2((_context = this.vectors.map(function (v) {
+          return v[1];
+        }), _utils.weightedAverage).call(_context, this.weights), (_context = this.vectors.map(function (v) {
+          return v[0];
+        }), _utils.weightedAverage).call(_context, this.weights));
       }
     }]);
 

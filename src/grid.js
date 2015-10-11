@@ -36,7 +36,7 @@ export default class Grid {
       for(let column = 0; column < this.columns; column++) {
         const x = (column + 0.5) * lineSpacing;
         const y = (row + 0.5) * lineSpacing;
-        this.array[row * this.columns + column] = new Line(x, y, 0, 0);
+        this.array[row * this.columns + column] = new Line(x, y);
       }
     }
   }

@@ -49,7 +49,7 @@ define('grid', ['exports', 'module', 'line', 'options'], function (exports, modu
         for (var column = 0; column < this.columns; column++) {
           var x = (column + 0.5) * _options.lineSpacing;
           var y = (row + 0.5) * _options.lineSpacing;
-          this.array[row * this.columns + column] = new _Line['default'](x, y, 0, 0);
+          this.array[row * this.columns + column] = new _Line['default'](x, y);
         }
       }
     }

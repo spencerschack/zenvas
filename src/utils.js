@@ -32,15 +32,18 @@ export function dot(a, b) {
   return a.reduce((sum, item, index) => sum + item * b[index], 0);
 }
 
-export function weightedAverage(arr, weights) {
-  return dot(arr, weights) / sum(weights);
+export function weightedAverage(weights) {
+  return dot(this, weights) / sum(weights);
 }
 
-export function pairs(arr) {
-  return Array(arr.length - 1).fill(0).map((_, i) => [arr[i], arr[i + 1]]);
+export function pairs() {
+  return Array(this.length - 1).fill(0).map((_, i) => [this[i], this[i + 1]]);
 }
 
 export function limit(n, lower, upper) {
-  console.log('limit', n, lower, upper);
   return max(min(n, upper), lower);
+}
+
+export function sign(n) {
+  return n > 0 ? 1 : n < 0 ? -1 : 0;
 }

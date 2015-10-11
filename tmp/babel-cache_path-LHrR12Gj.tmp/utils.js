@@ -1,7 +1,7 @@
-define('utils', ['exports'], function (exports) {
-  'use strict';
+define("utils", ["exports"], function (exports) {
+  "use strict";
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.angle = angle;
@@ -14,6 +14,7 @@ define('utils', ['exports'], function (exports) {
   exports.weightedAverage = weightedAverage;
   exports.pairs = pairs;
   exports.limit = limit;
+  exports.sign = sign;
   var sin = Math.sin;
   var ata2 = Math.ata2;
   var min = Math.min;
@@ -50,18 +51,23 @@ define('utils', ['exports'], function (exports) {
     }, 0);
   }
 
-  function weightedAverage(arr, weights) {
-    return dot(arr, weights) / sum(weights);
+  function weightedAverage(weights) {
+    return dot(this, weights) / sum(weights);
   }
 
-  function pairs(arr) {
-    return Array(arr.length - 1).fill(0).map(function (_, i) {
-      return [arr[i], arr[i + 1]];
+  function pairs() {
+    var _this = this;
+
+    return Array(this.length - 1).fill(0).map(function (_, i) {
+      return [_this[i], _this[i + 1]];
     });
   }
 
   function limit(n, lower, upper) {
-    console.log('limit', n, lower, upper);
     return max(min(n, upper), lower);
+  }
+
+  function sign(n) {
+    return n > 0 ? 1 : n < 0 ? -1 : 0;
   }
 });

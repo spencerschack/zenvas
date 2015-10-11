@@ -32,14 +32,17 @@ define('canvas', ['exports', 'module', 'grid', 'point_sampler', 'options', 'util
         return _this.fitElement();
       });
       this.fitElement();
-      var sampler = new _PointSampler['default'](20);
+      var sampler = new _PointSampler['default'](_options.brushLength);
       window.addEventListener('mousemove', function (_ref) {
         var x = _ref.pageX;
         var y = _ref.pageY;
+        var shiftKey = _ref.shiftKey;
 
-        sampler.push(x, y);
-        var angle = sampler.angle();
-        _this.brush(x, y, angle);
+        if (!shiftKey) {
+          sampler.push(x, y);
+          var angle = sampler.angle();
+          _this.brush(x, y, angle);
+        }
       });
     }
 
@@ -52,12 +55,11 @@ define('canvas', ['exports', 'module', 'grid', 'point_sampler', 'options', 'util
         var height = window.innerHeight;
 
         this.grid = new _Grid['default'](width, height);
-        this.width = width;
-        this.height = height;
         this.element.width = width * this.ratio;
         this.element.height = height * this.ratio;
         this.context.scale(this.ratio, this.ratio);
-        this.context.strokeStyle = _options.lineColor;
+        this.context.strokeStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';;
+        this.context.fillStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';
         this.grid.forEach(function (cell) {
           return cell.draw(_this2.context);
         });
@@ -67,20 +69,20 @@ define('canvas', ['exports', 'module', 'grid', 'point_sampler', 'options', 'util
       value: function brush(x, y, angle) {
         var _this3 = this;
 
-        var radius = _options.brushSize + _options.lineLength;
-        var rows = ceil(2 * radius / _options.lineSpacing);
-        var columns = ceil(2 * radius / _options.lineSpacing);
-        var row = floor((y - radius) / _options.lineSpacing);
-        var column = floor((x - radius) / _options.lineSpacing);
-        this.redraw(column * _options.lineSpacing, row * _options.lineSpacing, columns * _options.lineSpacing, rows * _options.lineSpacing, function () {
-          _this3.grid.view(row - 10, column - 10, rows + 20, columns + 20).forEach(function (cell) {
+        var inner = _options.brushSize + _options.lineLength;
+        var outer = inner + _options.lineLength;
+        var row = floor((y - outer) / _options.lineSpacing);
+        var column = floor((x - outer) / _options.lineSpacing);
+        var intervals = ceil(2 * outer / _options.lineSpacing);
+        this.redraw(x - inner, y - inner, 2 * inner, 2 * inner, function () {
+          _this3.grid.view(row, column, intervals, intervals).forEach(function (cell) {
             var dist = (0, _utils.distance)(cell.x0 - x, cell.y0 - y);
             if (dist < _options.brushSize) {
               var effect = (0, _options.brushProfile)(dist / _options.brushSize);
-              var _x = cos(angle) * _options.lineLength;
-              var _y = sin(angle) * _options.lineLength;
-              cell.x1 += (_x - cell.x1) * effect / 15;
-              cell.y1 += (_y - cell.y1) * effect / 15;
+              var dx = cos(angle) * _options.lineLength - cell.x1;
+              var dy = sin(angle) * _options.lineLength - cell.y1;
+              cell.x1 += dx * effect * _options.brushEffect;
+              cell.y1 += dy * effect * _options.brushEffect;
             }
             cell.draw(_this3.context);
           });
@@ -163,7 +165,7 @@ define('grid', ['exports', 'module', 'line', 'options'], function (exports, modu
         for (var column = 0; column < this.columns; column++) {
           var x = (column + 0.5) * _options.lineSpacing;
           var y = (row + 0.5) * _options.lineSpacing;
-          this.array[row * this.columns + column] = new _Line['default'](x, y, 0, 0);
+          this.array[row * this.columns + column] = new _Line['default'](x, y);
         }
       }
     }
@@ -187,15 +189,38 @@ define('grid', ['exports', 'module', 'line', 'options'], function (exports, modu
 
   module.exports = Grid;
 });
-define("line", ["exports", "module"], function (exports, module) {
-  "use strict";
+define('line', ['exports', 'module', 'utils', 'options'], function (exports, module, _utils, _options) {
+  'use strict';
 
-  var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+  var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+  var abs = Math.abs;
+  var atan2 = Math.atan2;
+  var PI = Math.PI;
+  var sin = Math.sin;
+
+  var tolerance = 0.6;
+
+  function strokeColor(line) {
+    var saturation = _options.lineSaturation * 100;
+    var angle = atan2(line.y1, line.x1) + PI / 4;
+    var lightness = (_options.lineLightness + sin(angle) * _options.lineTint) * 100;
+    return 'hsla(' + _options.lineHue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
+  }
+
+  function fillColor() {
+    var saturation = _options.lineSaturation * 100;
+    var lightness = _options.lineLightness * 100;
+    return 'hsla(' + _options.lineHue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
+  }
 
   var Line = (function () {
-    function Line(x0, y0, x1, y1) {
+    function Line(x0, y0) {
+      var x1 = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+      var y1 = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+
       _classCallCheck(this, Line);
 
       this.x0 = x0;
@@ -205,17 +230,22 @@ define("line", ["exports", "module"], function (exports, module) {
     }
 
     _createClass(Line, [{
-      key: "draw",
+      key: 'draw',
       value: function draw(context) {
         var x0 = this.x0;
         var y0 = this.y0;
         var x1 = this.x1;
         var y1 = this.y1;
 
-        if (x1 !== 0 || y1 !== 0) {
-          context.beginPath();
+        context.beginPath();
+        if ((0, _utils.distance)(x1, y1) <= tolerance) {
+          context.arc(x0, y0, 0.3, 0, 2 * PI);
+          // context.fillStyle = fillColor();
+          context.fill();
+        } else {
           context.moveTo(x0, y0);
           context.lineTo(x0 + x1, y0 + y1);
+          // context.strokeStyle = strokeColor(this);
           context.stroke();
         }
       }
@@ -239,21 +269,29 @@ define('main', ['exports', 'module', 'canvas'], function (exports, module, _canv
     var canvas = new _Canvas['default']();
   }
 });
-define('options', ['exports'], function (exports) {
-  'use strict';
+define("options", ["exports"], function (exports) {
+  "use strict";
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
   var pow = Math.pow;
   var sqrt = Math.sqrt;
-  var lineSpacing = 4;
+  var lineSpacing = 3;
   exports.lineSpacing = lineSpacing;
   var lineLength = 50;
   exports.lineLength = lineLength;
-  var lineColor = 'rgba(255, 255, 255, 0.35)';
+  var lineHue = 0;
+  exports.lineHue = lineHue;
+  var lineSaturation = 0;
+  exports.lineSaturation = lineSaturation;
+  var lineAlpha = 0.35;
+  exports.lineAlpha = lineAlpha;
+  var lineTint = 0.15;
+  exports.lineTint = lineTint;
+  var lineLightness = 1 - lineTint;
 
-  exports.lineColor = lineColor;
+  exports.lineLightness = lineLightness;
   var brushProfiles = {
     flat: function flat() {
       return 1;
@@ -268,17 +306,14 @@ define('options', ['exports'], function (exports) {
       return 1 - sqrt(1 - pow(x - 1, 2));
     }
   };
-  var brushProfile = brushProfiles.round;
+  var brushProfile = brushProfiles.sharp;
   exports.brushProfile = brushProfile;
   var brushSize = 30;
-
   exports.brushSize = brushSize;
-  exports['default'] = {
-    lineSpacing: lineSpacing,
-    lineLength: lineLength,
-    lineColor: lineColor,
-    brushSize: brushSize
-  };
+  var brushLength = 20;
+  exports.brushLength = brushLength;
+  var brushEffect = 0.15;
+  exports.brushEffect = brushEffect;
 });
 define('point_sampler', ['exports', 'module', 'utils'], function (exports, module, _utils) {
   'use strict';
@@ -287,6 +322,8 @@ define('point_sampler', ['exports', 'module', 'utils'], function (exports, modul
 
   function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+  var atan2 = Math.atan2;
+
   var PointSampler = (function () {
     function PointSampler(n) {
       _classCallCheck(this, PointSampler);
@@ -294,26 +331,29 @@ define('point_sampler', ['exports', 'module', 'utils'], function (exports, modul
       this.weights = Array(n).fill(0).map(function (_, i) {
         return -Math.pow(i / n, 2) + 1;
       });
-      this.xSamples = Array(n).fill(0);
-      this.ySamples = Array(n).fill(0);
+      this.vectors = Array(n).fill([0, 0]);
     }
 
     _createClass(PointSampler, [{
       key: 'push',
       value: function push(x, y) {
-        this.xSamples.pop();
-        this.xSamples.unshift(x);
-        this.ySamples.pop();
-        this.ySamples.unshift(y);
+        if (this.lastX && this.lastY) {
+          this.vectors.pop();
+          this.vectors.unshift([x - this.lastX, y - this.lastY]);
+        }
+        this.lastX = x;
+        this.lastY = y;
       }
     }, {
       key: 'angle',
       value: function angle() {
-        return Math.atan2((0, _utils.weightedAverage)((0, _utils.pairs)(this.ySamples).map(function (s) {
-          return s[0] - s[1];
-        }), this.weights), (0, _utils.weightedAverage)((0, _utils.pairs)(this.xSamples).map(function (s) {
-          return s[0] - s[1];
-        }), this.weights));
+        var _context;
+
+        return atan2((_context = this.vectors.map(function (v) {
+          return v[1];
+        }), _utils.weightedAverage).call(_context, this.weights), (_context = this.vectors.map(function (v) {
+          return v[0];
+        }), _utils.weightedAverage).call(_context, this.weights));
       }
     }]);
 
@@ -322,10 +362,10 @@ define('point_sampler', ['exports', 'module', 'utils'], function (exports, modul
 
   module.exports = PointSampler;
 });
-define('utils', ['exports'], function (exports) {
-  'use strict';
+define("utils", ["exports"], function (exports) {
+  "use strict";
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.angle = angle;
@@ -338,6 +378,7 @@ define('utils', ['exports'], function (exports) {
   exports.weightedAverage = weightedAverage;
   exports.pairs = pairs;
   exports.limit = limit;
+  exports.sign = sign;
   var sin = Math.sin;
   var ata2 = Math.ata2;
   var min = Math.min;
@@ -374,18 +415,23 @@ define('utils', ['exports'], function (exports) {
     }, 0);
   }
 
-  function weightedAverage(arr, weights) {
-    return dot(arr, weights) / sum(weights);
+  function weightedAverage(weights) {
+    return dot(this, weights) / sum(weights);
   }
 
-  function pairs(arr) {
-    return Array(arr.length - 1).fill(0).map(function (_, i) {
-      return [arr[i], arr[i + 1]];
+  function pairs() {
+    var _this = this;
+
+    return Array(this.length - 1).fill(0).map(function (_, i) {
+      return [_this[i], _this[i + 1]];
     });
   }
 
   function limit(n, lower, upper) {
-    console.log('limit', n, lower, upper);
     return max(min(n, upper), lower);
+  }
+
+  function sign(n) {
+    return n > 0 ? 1 : n < 0 ? -1 : 0;
   }
 });
