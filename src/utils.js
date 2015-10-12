@@ -1,7 +1,9 @@
 const {
   sin, ata2,
   min, max,
-  sqrt
+  sqrt,
+  floor,
+  random
 } = Math;
 
 export function angle(a, b) {
@@ -57,4 +59,12 @@ export function slicedEach(min, max, fn) {
   for(let i = min; i < max; i++) {
     fn(this[i]);
   }
+}
+
+export function shuffle() {
+  for(let i = this.length - 1; i > 0; i--) {
+    const index = floor(random() * i);
+    [this[i], this[index]] = [this[index], this[i]];
+  }
+  return this;
 }
