@@ -1,5 +1,6 @@
 import {distance} from 'utils';
 import {
+  lineWidth,
   lineHue,
   lineSaturation,
   lineLightness,
@@ -16,39 +17,38 @@ const {
 
 const tolerance = 0.6;
 
-function strokeColor(line) {
+function strokeColor() {
   const saturation = lineSaturation * 100;
-  const angle = atan2(line.y1, line.x1) + PI / 4;
-  const lightness = (lineLightness + sin(angle) * lineTint) * 100;
-  return `hsla(${lineHue}, ${saturation}%, ${lightness}%, ${lineAlpha})`;
+  const lightness = lineLightness * 100;
+  return `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${lineAlpha})`;
 }
 
 function fillColor() {
   const saturation = lineSaturation * 100;
   const lightness = lineLightness * 100;
-  return `hsla(${lineHue}, ${saturation}%, ${lightness}%, ${lineAlpha})`;
+  return `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${lineAlpha})`;
 }
 
 export default class Line {
 
-  constructor(x0, y0, x1 = 0, y1 = 0) {
+  constructor(x0, y0, x1 = 0, y1 = 0, hue = 0) {
     this.x0 = x0;
     this.y0 = y0;
     this.x1 = x1;
     this.y1 = y1;
+    this.hue = hue;
   }
 
   draw(context) {
     const {x0, y0, x1, y1} = this;
-    context.beginPath();
     if(distance(x1, y1) <= tolerance) {
-      context.arc(x0, y0, 0.3, 0, 2 * PI);
-      // context.fillStyle = fillColor();
-      context.fill();
+      context.fillStyle = this::fillColor();
+      context.fillRect(x0, y0, 1, 1);
     } else {
+      context.beginPath();
       context.moveTo(x0, y0);
       context.lineTo(x0 + x1, y0 + y1);
-      // context.strokeStyle = strokeColor(this);
+      context.strokeStyle = this::strokeColor();
       context.stroke();
     }
   }

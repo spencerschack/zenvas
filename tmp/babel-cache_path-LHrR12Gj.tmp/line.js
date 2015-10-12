@@ -12,23 +12,23 @@ define('line', ['exports', 'module', 'utils', 'options'], function (exports, mod
 
   var tolerance = 0.6;
 
-  function strokeColor(line) {
+  function strokeColor() {
     var saturation = _options.lineSaturation * 100;
-    var angle = atan2(line.y1, line.x1) + PI / 4;
-    var lightness = (_options.lineLightness + sin(angle) * _options.lineTint) * 100;
-    return 'hsla(' + _options.lineHue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
+    var lightness = _options.lineLightness * 100;
+    return 'hsla(' + this.hue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
   }
 
   function fillColor() {
     var saturation = _options.lineSaturation * 100;
     var lightness = _options.lineLightness * 100;
-    return 'hsla(' + _options.lineHue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
+    return 'hsla(' + this.hue + ', ' + saturation + '%, ' + lightness + '%, ' + _options.lineAlpha + ')';
   }
 
   var Line = (function () {
     function Line(x0, y0) {
       var x1 = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
       var y1 = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+      var hue = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
 
       _classCallCheck(this, Line);
 
@@ -36,6 +36,7 @@ define('line', ['exports', 'module', 'utils', 'options'], function (exports, mod
       this.y0 = y0;
       this.x1 = x1;
       this.y1 = y1;
+      this.hue = hue;
     }
 
     _createClass(Line, [{
@@ -46,15 +47,14 @@ define('line', ['exports', 'module', 'utils', 'options'], function (exports, mod
         var x1 = this.x1;
         var y1 = this.y1;
 
-        context.beginPath();
         if ((0, _utils.distance)(x1, y1) <= tolerance) {
-          context.arc(x0, y0, 0.3, 0, 2 * PI);
-          // context.fillStyle = fillColor();
-          context.fill();
+          context.fillStyle = fillColor.call(this);
+          context.fillRect(x0, y0, 1, 1);
         } else {
+          context.beginPath();
           context.moveTo(x0, y0);
           context.lineTo(x0 + x1, y0 + y1);
-          // context.strokeStyle = strokeColor(this);
+          context.strokeStyle = strokeColor.call(this);
           context.stroke();
         }
       }

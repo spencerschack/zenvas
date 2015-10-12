@@ -15,6 +15,8 @@ define("utils", ["exports"], function (exports) {
   exports.pairs = pairs;
   exports.limit = limit;
   exports.sign = sign;
+  exports.ndArray = ndArray;
+  exports.slicedEach = slicedEach;
   var sin = Math.sin;
   var ata2 = Math.ata2;
   var min = Math.min;
@@ -69,5 +71,22 @@ define("utils", ["exports"], function (exports) {
 
   function sign(n) {
     return n > 0 ? 1 : n < 0 ? -1 : 0;
+  }
+
+  function ndArray(dimension) {
+    for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      rest[_key - 1] = arguments[_key];
+    }
+
+    if (dimension === undefined) return;
+    return Array(dimension).fill(0).map(function () {
+      return ndArray.apply(undefined, rest);
+    });
+  }
+
+  function slicedEach(min, max, fn) {
+    for (var i = min; i < max; i++) {
+      fn(this[i]);
+    }
   }
 });

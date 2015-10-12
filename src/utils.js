@@ -47,3 +47,14 @@ export function limit(n, lower, upper) {
 export function sign(n) {
   return n > 0 ? 1 : n < 0 ? -1 : 0;
 }
+
+export function ndArray(dimension, ...rest) {
+  if(dimension === undefined) return;
+  return Array(dimension).fill(0).map(() => ndArray(...rest));
+}
+
+export function slicedEach(min, max, fn) {
+  for(let i = min; i < max; i++) {
+    fn(this[i]);
+  }
+}

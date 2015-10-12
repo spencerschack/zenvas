@@ -2,3 +2,6 @@ round (2-10) cell tint and batch draw calls (or shader)
 generate random field instead of grid
 colorz
 interpolate between mouse events
+change line<x0,y0,x1,y1> to line<x,y,dx,dy> where dx, dy in [0, 1]
+  store x, y in point
+  store dx, dy in vector
