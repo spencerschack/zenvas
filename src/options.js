@@ -25,4 +25,4 @@ export const growBackProbability = 0.05;
 export const growEdgeLimit = 100000;
 export const growSpreadLimit = 100;
 export const growColorIncrement = 0.0001;
-export const growColonyCount = 20;
+export const growColonyCount = 50;
