@@ -10,12 +10,20 @@ const indexHtml = funnel(src, {
 });
 
 const js = esTranspiler(src, {
-  stage: 0,
+
+  plugins: [
+    'transform-class-properties',
+    'transform-function-bind',
+    'transform-es2015-modules-amd'
+  ],
+  presets: [
+    'es2015'
+  ],
+
   moduleIds: true,
-  modules: 'amd',
 
   // Transforms /index.js files to use their containing directory name
-  getModuleId: function (name) { 
+  getModuleId: function (name) {
     return name.replace(/\/index$/, '');
   },
 
