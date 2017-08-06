@@ -41,14 +41,9 @@ export default class Line {
   draw(context) {
     const {x0, y0, x1, y1} = this;
     context.beginPath();
-    if(distance(x1, y1) <= tolerance) {
-      context.arc(x0, y0, 0.3, 0, 2 * PI);
-      // context.fillStyle = fillColor();
-      context.fill();
-    } else {
+    if(distance(x1, y1) > tolerance) {
       context.moveTo(x0, y0);
       context.lineTo(x0 + x1, y0 + y1);
-      // context.strokeStyle = strokeColor(this);
       context.stroke();
     }
   }

@@ -1,6 +1,6 @@
 import Grid from 'grid';
 import PointSampler from 'point_sampler';
-import { 
+import {
   lineSpacing,
   lineLength,
   lineHue,
@@ -29,6 +29,8 @@ export default class Canvas {
     this.ratio = window.devicePixelRatio || 1;
     window.addEventListener('resize', () => this.fitElement());
     this.fitElement();
+    this.context.strokeStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;;
+    this.context.fillStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;
     const sampler = new PointSampler(brushLength);
     window.addEventListener('mousemove', ({pageX: x, pageY: y, shiftKey}) => {
       if(!shiftKey) {
@@ -45,9 +47,6 @@ export default class Canvas {
     this.element.width  =  width * this.ratio;
     this.element.height = height * this.ratio;
     this.context.scale(this.ratio, this.ratio);
-    this.context.strokeStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;;
-    this.context.fillStyle = `hsla(${lineHue}, ${lineSaturation * 100}%, ${lineLightness * 100}%, ${lineAlpha})`;
-    this.grid.forEach(cell => cell.draw(this.context));
   }
 
   brush(x, y, angle) {
