@@ -1,5 +1,9 @@
 import Canvas from 'canvas';
 
 export default function main() {
-  new Canvas();
+  if(document.readyState === 'complete') {
+    new Canvas();
+  } else {
+    document.addEventListener('DOMContentLoaded', main);
+  }
 }

@@ -2501,7 +2501,11 @@ define('main', ['exports', 'canvas'], function (exports, _canvas) {
   }
 
   function main() {
-    new _canvas2.default();
+    if (document.readyState === 'complete') {
+      new _canvas2.default();
+    } else {
+      document.addEventListener('DOMContentLoaded', main);
+    }
   }
 });
 define("options", ["exports"], function (exports) {
