@@ -2501,9 +2501,7 @@ define('main', ['exports', 'canvas'], function (exports, _canvas) {
   }
 
   function main() {
-    document.addEventListener('DOMContentLoaded', function () {
-      return new _canvas2.default();
-    });
+    new _canvas2.default();
   }
 });
 define("options", ["exports"], function (exports) {
