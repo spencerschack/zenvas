@@ -2206,6 +2206,8 @@ define('canvas', ['exports', 'grid', 'point_sampler', 'options', 'utils'], funct
         return _this.fitElement();
       });
       this.fitElement();
+      this.context.strokeStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';;
+      this.context.fillStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';
       var sampler = new _point_sampler2.default(_options.brushLength);
       window.addEventListener('mousemove', function (_ref) {
         var x = _ref.pageX,
@@ -2223,8 +2225,6 @@ define('canvas', ['exports', 'grid', 'point_sampler', 'options', 'utils'], funct
     _createClass(Canvas, [{
       key: 'fitElement',
       value: function fitElement() {
-        var _this2 = this;
-
         var _window = window,
             width = _window.innerWidth,
             height = _window.innerHeight;
@@ -2233,16 +2233,11 @@ define('canvas', ['exports', 'grid', 'point_sampler', 'options', 'utils'], funct
         this.element.width = width * this.ratio;
         this.element.height = height * this.ratio;
         this.context.scale(this.ratio, this.ratio);
-        this.context.strokeStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';;
-        this.context.fillStyle = 'hsla(' + _options.lineHue + ', ' + _options.lineSaturation * 100 + '%, ' + _options.lineLightness * 100 + '%, ' + _options.lineAlpha + ')';
-        this.grid.forEach(function (cell) {
-          return cell.draw(_this2.context);
-        });
       }
     }, {
       key: 'brush',
       value: function brush(x, y, angle) {
-        var _this3 = this;
+        var _this2 = this;
 
         var inner = _options.brushSize + _options.lineLength;
         var outer = inner + _options.lineLength;
@@ -2250,7 +2245,7 @@ define('canvas', ['exports', 'grid', 'point_sampler', 'options', 'utils'], funct
         var column = floor((x - outer) / _options.lineSpacing);
         var intervals = ceil(2 * outer / _options.lineSpacing);
         this.redraw(x - inner, y - inner, 2 * inner, 2 * inner, function () {
-          _this3.grid.view(row, column, intervals, intervals).forEach(function (cell) {
+          _this2.grid.view(row, column, intervals, intervals).forEach(function (cell) {
             var dist = (0, _utils.distance)(cell.x0 - x, cell.y0 - y);
             if (dist < _options.brushSize) {
               var effect = (0, _options.brushProfile)(dist / _options.brushSize);
@@ -2259,7 +2254,7 @@ define('canvas', ['exports', 'grid', 'point_sampler', 'options', 'utils'], funct
               cell.x1 += dx * effect * _options.brushEffect;
               cell.y1 += dy * effect * _options.brushEffect;
             }
-            cell.draw(_this3.context);
+            cell.draw(_this2.context);
           });
         });
       }
@@ -2466,14 +2461,9 @@ define('line', ['exports', 'utils', 'options'], function (exports, _utils, _opti
             y1 = this.y1;
 
         context.beginPath();
-        if ((0, _utils.distance)(x1, y1) <= tolerance) {
-          context.arc(x0, y0, 0.3, 0, 2 * PI);
-          // context.fillStyle = fillColor();
-          context.fill();
-        } else {
+        if ((0, _utils.distance)(x1, y1) > tolerance) {
           context.moveTo(x0, y0);
           context.lineTo(x0 + x1, y0 + y1);
-          // context.strokeStyle = strokeColor(this);
           context.stroke();
         }
       }
@@ -2501,7 +2491,7 @@ define('main', ['exports', 'canvas'], function (exports, _canvas) {
   }
 
   function main() {
-    if (document.readyState === 'complete') {
+    if (document.readyState !== 'loading') {
       new _canvas2.default();
     } else {
       document.addEventListener('DOMContentLoaded', main);
