@@ -1,45 +1,45 @@
-const funnel = require('broccoli-funnel');
-const concat = require('broccoli-concat');
-const mergeTrees = require('broccoli-merge-trees');
-const esTranspiler = require('broccoli-babel-transpiler');
+const Funnel = require('broccoli-funnel');
+const Concat = require('broccoli-concat');
+const MergeTrees = require('broccoli-merge-trees');
+const JSTranspiler = require('broccoli-babel-transpiler');
+const BroccoliLivereload = require('broccoli-livereload');
 
-const src = 'src';
-
-const indexHtml = funnel(src, {
-  files: ['index.html']
+const index = new BroccoliLivereload('src', {
+  target: 'index.html'
 });
 
-const js = esTranspiler(src, {
-  stage: 0,
-  moduleIds: true,
-  modules: 'amd',
+const js = new JSTranspiler('src', {
 
-  // Transforms /index.js files to use their containing directory name
-  getModuleId: function (name) { 
-    return name.replace(/\/index$/, '');
-  },
+  plugins: [
+    'transform-class-properties',
+    'transform-function-bind',
+    'transform-es2015-modules-amd'
+  ],
 
-  // Fix relative imports inside /index's
-  resolveModuleSource: function (source, filename) {
-    var match = filename.match(/(.+)\/index\.\S+$/i);
+  presets: [
+    'es2015'
+  ],
 
-    // is this an import inside an /index file?
-    if (match) {
-      var path = match[1];
-      return source
-        .replace(/^\.\//, path + '/')
-        .replace(/^\.\.\//, '');
-    } else {
-      return source;
-    }
-  }
+  moduleIds: true
+
 });
 
-const main = concat(js, {
+const packages = new Funnel('node_modules/requirejs', {
+  files: ['require.js']
+});
+
+const scripts = new Concat(new MergeTrees([js, packages]), {
+
   inputFiles: [
     '**/*.js'
   ],
-  outputFile: '/script.js'
+
+  outputFile: '/script.js',
+
+  headerFiles: ['require.js'],
+
+  footer: "require(['main'], function(main) { main.default(); });"
+
 });
 
-module.exports = mergeTrees([main, indexHtml]);
+module.exports = new MergeTrees([scripts, index]);
